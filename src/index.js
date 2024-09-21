@@ -4,21 +4,47 @@ const {injector} = require("./utils/inject/loader");
 const {workerData, parentPort} = require('worker_threads')
 const {initHook} = require("./utils/webhook");
 const {configureLogger, log} = require("./utils/log");
-const {email, proxy} = workerData
+const {email, token, proxy} = workerData
+
+const { createHash } = require("prismarine-auth/src/common/Util")
+const path = require('path')
+const fs = require("fs")
+
 let hook
 
 async function main() {
-    console.log(`Starting worker for ${email}`)
+    displayName = email !== undefined ? email : token.slice(0, 25) + "..." 
+
+    console.log(`Starting worker for ${displayName}`)
     const opts = {
         host: "mc.hypixel.net",
         port: 25565,
-        email,
-        auth: "microsoft",
-        version: "1.8.9",
-        profilesFolder: `./cache/cache-${email}`,
+        version: "1.12.2",
+        auth: "microsoft"
     }
+
+    if (email !== undefined) {
+        opts.username = email
+        opts.profilesFolder = `./cache/cache-${email}`
+    } else {
+        opts.auth = "microsoft"
+        opts.profilesFolder = `./cache/cache-${token.split(".")[0]}`
+        fs.mkdirSync(opts.profilesFolder, { recursive: true })
+
+        opts.username = "hashable"
+        hash = createHash(opts.username)
+        cacheLocation = path.join(opts.profilesFolder, `./${hash}_mca-cache.json`)
+        fs.writeFileSync(cacheLocation, JSON.stringify({
+            "mca": {
+                access_token: token,
+                expires_in: 86400,
+                obtainedOn: Date.now()
+            }
+        }))
+    }
+
     if (proxy) {
-        console.log(`Using proxy ${proxy.ip} for ${email}`)
+        console.log(`Using proxy ${proxy.ip} for ${displayName}`)
         const {ip, port, username, password} = proxy
         opts.connect = (client) => {
             socks.createConnection({
@@ -45,7 +71,6 @@ async function main() {
         }
     }
     const bot = mineflayer.createBot(opts)
-
     bot.once('login', async () => {
         hook = initHook("", bot._client.uuid)
         bot.hook = hook
@@ -80,7 +105,14 @@ async function main() {
 }
 
 process.on(`uncaughtException`, (err) => {
-    if (err.toString().includes("assert")) return
+    if (err.toString().includes("assert")) 
+        return
+
+    if (err.toString().includes("does the account own minecraft?")) {
+        console.error("[mca] Provided token is invalid or expired: ", token.substring(0, 25) + "...")
+        process.exit(-1)
+    }
+
     hook.sendEmbedded(`Pit Bot Error`, `Bot encountered \`${err.stack}\``)
     process.exit(0)
 })

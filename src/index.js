@@ -31,7 +31,7 @@ async function main() {
         opts.profilesFolder = `./cache/cache-${token.split(".")[0]}`
         fs.mkdirSync(opts.profilesFolder, { recursive: true })
 
-        opts.username = "hashable"
+        opts.username = token.split(".")[0]
         hash = createHash(opts.username)
         cacheLocation = path.join(opts.profilesFolder, `./${hash}_mca-cache.json`)
         fs.writeFileSync(cacheLocation, JSON.stringify({

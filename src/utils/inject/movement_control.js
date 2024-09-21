@@ -15,6 +15,8 @@ function inject(bot) {
         return Math.acos(botLookVector.dot(targetVector)) * (180 / Math.PI);
     }
 
+    let sprintDelay = 0
+    let jumpDelay = 0
     bot.on(`physicsTick`, () => {
         switch (bot.statemachine.lobby) {
             case "follow": {
@@ -71,9 +73,20 @@ function inject(bot) {
         switch (bot.statemachine.pvp) {
             case "melee": {
                 bot.smoothLook.lookAt(bot.target.position.offset(0, 1.45, 0), angleBetween(bot.target.position) / 30 * (200) + Math.random() * (angleBetween(bot.target.position) / 30 * (300)))
-                bot.setControlState('jump', true)
                 bot.setControlState('forward', true)
-                bot.setControlState('sprint', true)
+
+                if (jumpDelay <= 0) {
+                    bot.setControlState('jump', true)
+                    jumpDelay = Math.ceil(20 + Math.random() * 30)
+                }
+                jumpDelay--
+
+                if (!bot.getControlState("sprint") && sprintDelay <= 0) {
+                    sprintDelay += 4
+                    bot.setControlState('sprint', true)
+                }
+                sprintDelay--
+
                 break;
             }
         }

@@ -25,7 +25,7 @@ function createTokenWorker(token, proxyCounter) {
         // restart worker
         console.log(`Worker ${token.substring(0, 25) + "..."} exited with code ${code}. Restarting...`)
         workers.splice(workers.indexOf(worker), 1)
-        createTokenWorker(email, proxyCounter)
+        createTokenWorker(token, proxyCounter)
     })
 
     initWorker(worker)

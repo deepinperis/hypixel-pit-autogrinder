@@ -79,10 +79,11 @@ function inject(bot) {
                     bot.setControlState('jump', true)
                     jumpDelay = Math.ceil(20 + Math.random() * 30)
                 }
+                bot.setControlState('jump', false)
                 jumpDelay--
 
                 if (!bot.getControlState("sprint") && sprintDelay <= 0) {
-                    sprintDelay += 4
+                    sprintDelay += 6
                     bot.setControlState('sprint', true)
                 }
                 sprintDelay--
